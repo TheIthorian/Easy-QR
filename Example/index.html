@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>QR Code Generator</title>
+        <meta name="viewport" 
+          content="width=device-width, initial-scale=1">  
+        <script src="index.js"></script>
+        <script src="../EasyQR/CanvasGrid.js"></script>
+        <script src="../EasyQR/QRArray.js"></script>
+        <script src="../EasyQR/QRCode.js"></script>
+    </head>
+
+    <style>
+        :root{
+            --primary: rgb(116, 40, 170)
+        }
+        .container {
+            width: calc(100% - 40px);
+            margin: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .input-container {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 3px;
+        }
+        label {
+            margin: 10px 0px 10px 0px;
+        }
+        #qr {
+            width: 100%;
+        }
+        button {
+            padding: 12px;
+            width: 100px;
+            background-color: var(--primary);
+            border: 0px;
+            border-radius: 5px;
+            color: white;
+            margin: 10px 0px 10px 0px;
+            cursor: pointer;
+        }
+        button:hover{
+            filter: brightness(115%);
+        }
+        canvas {
+            border: solid 2px var(--primary);
+            max-width: min(80vw, 80vh);
+            max-height: min(80vw, 80vh);
+            margin: 10px 0px 10px 0px;
+            background-color: rgb(196, 196, 196);
+        }
+    </style>
+    
+    <div class="container">
+        <h1>QR Code Generator</h1>
+        <p>Made using 
+            <a href="https://www.thonky.com/qr-code-tutorial/data-encoding">
+                https://www.thonky.com/qr-code-tutorial/data-encoding
+            </a>
+        </p>
+        <div class="input-container">
+            <label>Text to encode:</label>
+            <!-- <input type="text" id="input" value="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"> -->
+            <input type="text" id="input" value="Hello">
+        </div>
+        <button id="submit">Encode</button>
+        <canvas id="qr">
+
+        </canvas>
+    </div>
+    
+
+</html>

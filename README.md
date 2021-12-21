@@ -1,0 +1,2 @@
+# EasyQR
+ QR Code Generator
