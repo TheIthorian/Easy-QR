@@ -1,9 +1,16 @@
+/*
+TODO:
+ - Remove old comments and logs
+ - Add finder patterns for v2+
+ - Add all other masks and optimise
+*/
 
 class QRArray {
 
     constructor(size, data, correctionLevel) {
 
         this.data = data;
+        this.correctionLevel = correctionLevel;
 
         this.array = [];
         this.size = size;
@@ -51,7 +58,6 @@ class QRArray {
         const startPositions = [0, this.size - square.length, 
             this.size * (this.size - square.length)];
 
-
         for (let position of startPositions) {
             for (let i = 0; i < square.length; i++) {
                 for (let j = 0; j < square.length; j++) {
@@ -85,24 +91,8 @@ class QRArray {
             this.array[this.coordToIndex(i, this.size - 8)] = "0";
         } 
 
-    }
+        this.array[this.coordToIndex(8, this.size - 8)] = "1";
 
-    addFormatBits() {
-        // Top left
-        for (let i = 0; i < 9; i++) {        
-            this.array[this.coordToIndex(8, i)] = this.array[this.coordToIndex(8, i)] == "1" ? "1" : "0";
-            this.array[this.coordToIndex(i, 8)] = this.array[this.coordToIndex(i, 8)] == "1" ? "1" : "0";
-        } 
-
-        // Top right
-        for (let i = 0; i < 8; i++) {        
-            this.array[this.coordToIndex(this.size - i - 1, 8)] = "0";
-        } 
-
-        // Bottom left
-        for (let i = 0; i < 9; i++) {
-            this.array[this.coordToIndex(8, this.size - i)] = i == 8 ? "1": "0";
-        } 
     }
 
     addCodewords() {
@@ -120,6 +110,7 @@ class QRArray {
 
 
         // Loop over each bit
+        // https://dev.to/maxart2501/let-s-develop-a-qr-code-generator-part-iv-placing-bits-3mn1
         for (let i = 0; i < this.data.length; i++) {
 
             if (x_pos == 10 && y_pos == this.size - 1) {
@@ -185,12 +176,18 @@ class QRArray {
 
                             goingLeft = false;
                             goingUp = false;
-                                                        
+
+                            console.log(x_pos, y_pos);
+
+
                             x_pos--;
-                            this.array[this.coordToIndex(x_pos, y_pos)] = this.data[i] == 1 ? "1" : "0";
+                            this.array[this.coordToIndex(x_pos, y_pos)] = this.data[i+1] == 1 ? "1" : "0";
 
                             x_pos--; i++;
                             this.array[this.coordToIndex(x_pos, y_pos)] = this.data[i] == 1 ? "1" : "0";
+
+
+                            console.log(x_pos, y_pos);
 
                             continue;
 
@@ -265,6 +262,7 @@ class QRArray {
                 }
             }
         }
+
     }
 
 
@@ -307,8 +305,6 @@ class QRArray {
             (bit, index) => bit ^ FORMAT_MASK[index]
         );
 
-        console.log(maskedFormatPoly);
-
         for (let i = 0; i < 7; i++) {
             let val;
             if (maskedFormatPoly[i] == 254) {
@@ -329,7 +325,7 @@ class QRArray {
 
             this.array[this.coordToIndex(i + dx, 8)] = val; // Top left - bottom
             this.array[this.coordToIndex(8, this.size - i - 1)] = val; // Bottom left - right
-            console.log(i, val);
+            // console.log(i, val);
         }
 
 
@@ -353,12 +349,8 @@ class QRArray {
             
             this.array[this.coordToIndex(8, 15 - i - dy)] = val; // Top left - right
             this.array[this.coordToIndex(this.size - 15 + i, 8)] = val; // Top right - bottom
-            console.log(i, val);
+            // console.log(i, val);
         }
-
-        
-
-        
     }
 
     addAlternating() {
@@ -366,8 +358,6 @@ class QRArray {
             this.array[i] = i % 2 ? '0' : '1';
         }
     }
-
-
 
 }
 

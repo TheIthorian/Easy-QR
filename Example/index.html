@@ -30,6 +30,10 @@
             width: 100%;
             padding: 3px;
         }
+        select {
+            padding: 3px;
+            margin: 3px 0px 3px 0px;
+        }
         label {
             margin: 10px 0px 10px 0px;
         }
@@ -66,11 +70,26 @@
             </a>
         </p>
         <div class="input-container">
-            <label>Text to encode:</label>
+            <label for="input">Text to encode:</label>
             <!-- <input type="text" id="input" value="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"> -->
-            <input type="text" id="input" value="Hello">
+            <input name="input" type="text" id="input" value="Hello">
+            <label for="mode">Mode:</label>
+            <select name="mode" id="mode-select">
+                <option value="Numeric" disabled>Numeric</option>
+                <option value="Alphanumeric" disabled>Alphanumeric</option>
+                <option value="Byte" >Byte</option>
+                <option value="Kanji" disabled>Kanji</option>
+            </select>
+            <label for="error-correction">Error Correction:</label>
+            <select name="error-correction" id="error-correction-select">
+                <option value="L">Low</option>
+                <option value="M">Medium</option>
+                <option value="Q">Quartile</option>
+                <option value="H">High</option>
+            </select>
         </div>
         <button id="submit">Encode</button>
+        <div id="error"></div>
         <canvas id="qr">
 
         </canvas>
