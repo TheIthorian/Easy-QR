@@ -199,7 +199,7 @@ class QRCode {
         this.version = this.#getRequiredVersion();
         this.size = this.#getSize();
 
-        if (this.version > 1) {
+        if (this.version >= 2) {
             this.setError("ERC_VERSION_NOT_SUPPORTED");
         }
         
