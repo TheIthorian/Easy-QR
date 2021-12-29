@@ -7,15 +7,16 @@ TODO:
 
 class QRArray {
 
-    constructor(size, data, correctionLevel) {
+    constructor(qrCode, codewords) {
 
-        this.data = data;
-        this.correctionLevel = correctionLevel;
+        this.data = codewords;
+        this.correctionLevel = qrCode.correctionLevel;
 
         this.array = [];
-        this.size = size;
+        this.size = qrCode.size;
+        this.version = qrCode.version;
 
-        for (let i = 0; i < size * size; i++) {
+        for (let i = 0; i < this.size * this.size; i++) {
             this.array[i] = '';
         }
         
@@ -45,7 +46,7 @@ class QRArray {
     }
 
     addFinderPattern() {
-        const square = [
+        const LARGE_SQURE = [
             ["1","1","1","1","1","1","1"],
             ["1","0","0","0","0","0","1"],
             ["1","0","1","1","1","0","1"],
@@ -55,14 +56,14 @@ class QRArray {
             ["1","1","1","1","1","1","1"]
         ];
 
-        const startPositions = [0, this.size - square.length, 
-            this.size * (this.size - square.length)];
+        const startPositions = [0, this.size - LARGE_SQURE.length, 
+            this.size * (this.size - LARGE_SQURE.length)];
 
         for (let position of startPositions) {
-            for (let i = 0; i < square.length; i++) {
-                for (let j = 0; j < square.length; j++) {
+            for (let i = 0; i < LARGE_SQURE.length; i++) {
+                for (let j = 0; j < LARGE_SQURE.length; j++) {
                     
-                    this.array[position + i + this.size * j] = square[i][j];
+                    this.array[position + i + this.size * j] = LARGE_SQURE[i][j];
                     
                 }
             }
@@ -95,174 +96,225 @@ class QRArray {
 
     }
 
+    addSmallFinderPatterns() {
+
+        let patternLocations = this.getAlignmentPatternPositions();
+
+        for(let x = 0; x < patternLocations.length; x++) {
+            for (let y = 0; y < patternLocations.length; y++) {                
+                if (x == 0 && y == 0 // // Always blocked by the large finder pattern
+                    || x == 0 && y == patternLocations.length - 1
+                    || x == patternLocations.length - 1 && y == 0) { 
+                    continue;
+                } else {
+                    this.addSmallerFinderSquare(patternLocations[x], patternLocations[y]);
+                }
+            }
+        }
+    }
+
+    addSmallerFinderSquare(x, y) {
+        const SMALL_SQUARE = [
+            ["1","1","1","1","1"],
+            ["1","0","0","0","1"],
+            ["1","0","1","0","1"],
+            ["1","0","0","0","1"],
+            ["1","1","1","1","1"]
+        ];
+
+        for (let i = 0; i < 5; i++) {
+            for (let j = 0; j < 5; j++) {
+                this.array[this.coordToIndex(x - 2 + i, y - 2 + j)] = SMALL_SQUARE[i][j];
+            }
+        }
+
+    }
+
+    getAlignmentPatternPositions() { // TODO: Make this return a ist of points instead
+        if (this.version == 1)
+            return [];
+        else {
+            const numAlign = Math.floor(this.version / 7) + 2;
+            const step = (this.version == 32) ? 26 :
+                Math.ceil((this.version * 4 + 4) / (numAlign * 2 - 2)) * 2;
+            let result = [6];
+            for (let pos = this.size - 7; result.length < numAlign; pos -= step)
+                result.splice(1, 0, pos);
+            return result;
+        }
+    }
+
+    addVersionInformation() {
+        if (this.version < 7) {return;}
+        let data = this.getVersionInformation(this.version);
+        for (let row = 0; row < 6; row++) {
+            for (let column = 0; column < 3; column++) {
+                // console.log(`x: ${row}, y: ${this.size - 11 + column}, bit: ${data[3*row + column]}`);
+                this.array[this.coordToIndex(row, this.size - 11 + column)] = data[3*row + column].toString();
+                this.array[this.coordToIndex(this.size - 11 + column, row)] = data[3*row + column].toString();
+            }
+        }
+    }
+
+    
+    getVersionInformation(version) {
+        const VERSION_DIVISOR = new Uint8Array([1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1]);
+        const poly = Uint8Array.from(version.toString(2).padStart(6, '0') + '000000000000');
+        poly.set(polyRest(poly, VERSION_DIVISOR), 6);
+        return poly;
+    }
+
+    placeCodewordHorizontalPair(index, x, y) {
+        if(x < 0 || y < 0) {
+            return;
+        }
+        // console.log(index, x, y, this.data[index]);
+        this.array[this.coordToIndex(x  , y)] = this.data[index];
+
+        // console.log(index + 1, x-1, y, this.data[index + 1]);
+        this.array[this.coordToIndex(x-1, y)] = this.data[index + 1];
+    }
+
+    placeCodewordPair(index, x, y) {
+        // console.log(index, x, y, this.data[index]);
+        this.array[this.coordToIndex(x, y)] = this.data[index];
+    }
+
+    placeCodewordVerticalPair(index, x, y, goingUp) {
+        let direction = goingUp ? 1 : -1;
+        this.array[this.coordToIndex(x, y)] = this.data[index];
+        for (let i = 1; i <= 6; i++) {
+            this.array[this.coordToIndex(x, y + direction * i)] = this.data[index + i];
+        }
+        index += 6;
+        y += 6 * direction;
+    }
+
+
     addCodewords() {
 
-        // Need to include additional markers for larger versions
-
         // position initialized to bottom right
-        let x_pos, y_pos, goingLeft, goingUp, max_idx;
-        let index = 0;
-
-        goingUp = goingLeft = true;
+        let x_pos, y_pos, goingUp;
+        goingUp = true;
 
         x_pos = this.size - 1;
         y_pos = this.size - 1;
 
+        let alignmetPatternPositions = this.getAlignmentPatternPositions();
 
-        // Loop over each bit
-        // https://dev.to/maxart2501/let-s-develop-a-qr-code-generator-part-iv-placing-bits-3mn1
-        for (let i = 0; i < this.data.length; i++) {
+        console.log(this.getAlignmentPatternPositions());
+        console.log(this.version, this.data.length);
 
-            if (x_pos == 10 && y_pos == this.size - 1) {
-                
-                this.array[this.coordToIndex(x_pos, y_pos)] = this.data[i] == 1 ? "1" : "0";
-                i++; x_pos--;
+        for (let i = 0; i < this.data.length; i+=2) {
 
-                this.array[this.coordToIndex(x_pos, y_pos)] = this.data[i] == 1 ? "1" : "0";
-
-                x_pos = 8; 
-                y_pos = this.size - 9;
-                this.array[this.coordToIndex(x_pos, y_pos)] = "X";
-
-                goingUp = true;
-                goingLeft = true;
-
+            if (i == 0) {
+                this.placeCodewordHorizontalPair(i, x_pos, y_pos);
+                y_pos--;
                 continue;
             }
 
-            this.array[this.coordToIndex(x_pos, y_pos)] = this.data[i] == 1 ? "1" : "0";           
-
-
-            if (goingLeft) {
-
-                x_pos--;
-                goingLeft = false;
-                continue;
-            }
-
-
-            else {
-
-                if (y_pos == 7 && goingUp) {
-                    y_pos -= 1;
-                }
-
-                else if (y_pos == 5 && !goingUp) {
-                    y_pos += 1;
-                }
-
-                if (goingUp) {
-
-                    if (y_pos == 0) {
-                        goingUp = false;
-                        
-                        x_pos--;
-                        this.array[this.coordToIndex(x_pos, y_pos)] = this.data[i] == 1 ? "1" : "0"; 
-
-                        x_pos--; i++;
-                        this.array[this.coordToIndex(x_pos, y_pos)] = this.data[i] == 1 ? "1" : "0";
-
-                        continue;
-
-                    }              
-
-                    else if (x_pos <= 10 || x_pos >= this.size - 8) { // At a finder square boundary
-                        
-                        if (y_pos == 9) {
-
-                            if (x_pos == 7) {
-                                x_pos--;
-                            }
-
-                            goingLeft = false;
-                            goingUp = false;
-
-                            console.log(x_pos, y_pos);
-
-
-                            x_pos--;
-                            this.array[this.coordToIndex(x_pos, y_pos)] = this.data[i+1] == 1 ? "1" : "0";
-
-                            x_pos--; i++;
-                            this.array[this.coordToIndex(x_pos, y_pos)] = this.data[i] == 1 ? "1" : "0";
-
-
-                            console.log(x_pos, y_pos);
-
-                            continue;
-
-                        }
-
-                        else { // Continue going up
-                            x_pos++;
-                            y_pos--;
-                            goingLeft = true;
-                            continue;
-                        }
-
+            if(goingUp) {
+                if (this.version >= 7 && y_pos == 7 && x_pos == 36) { // At version info
+                    this.placeCodewordHorizontalPair(i, x_pos, y_pos);
+                    y_pos = 0; x_pos = this.size - 12; i++;
+                    for (let j = 0; j < 6; j++) {
+                        this.array[this.coordToIndex(x_pos, y_pos + j)] = this.data[i];
+                        console.log(x_pos, y_pos + j, i)
+                        i++;
                     }
+                    y_pos = 7; x_pos = 34;
+                    this.placeCodewordHorizontalPair(i, x_pos, y_pos);
+                    y_pos--;
+                    goingUp = false;
+                }
+                else if (y_pos == 9 && (x_pos > this.size - 8 || x_pos <= 8) 
+                        || y_pos == 0) { // At bounary
+                    this.placeCodewordHorizontalPair(i, x_pos, y_pos);
+                    i += 2;
 
-                    else { // Continue going up
-                        x_pos++;
+                    // Vertical timing pattern
+                    x_pos == 8 && y_pos == 9 ?  x_pos -= 3 :  x_pos -= 2;
+
+                    goingUp = false;
+                    this.placeCodewordHorizontalPair(i, x_pos, y_pos);
+                    y_pos++;
+                }
+                else if (alignmetPatternPositions.includes(y_pos - 3)
+                    && alignmetPatternPositions.includes(x_pos - 2)) { // At alignment pattern
+                    this.placeCodewordHorizontalPair(i, x_pos, y_pos);
+                    y_pos -= 6;
+                }
+                else if (alignmetPatternPositions.includes(y_pos - 3)
+                    && alignmetPatternPositions.includes(x_pos + 2)
+                    && !(alignmetPatternPositions[0] == x_pos + 2 && alignmetPatternPositions[0] == y_pos - 3)
+                    && !(alignmetPatternPositions[0] == x_pos + 2 && alignmetPatternPositions[alignmetPatternPositions.length - 1] == y_pos - 3)
+                    && !(alignmetPatternPositions[0] == y_pos - 3 && alignmetPatternPositions[alignmetPatternPositions.length - 1] == x_pos + 2)
+                    ) { // At alignment pattern
+                    console.log(alignmetPatternPositions);
+                    console.log("Alignment pattern up");
+                    this.placeCodewordHorizontalPair(i, x_pos, y_pos);
+                    i += 2;
+                    x_pos--;
+                    y_pos--;
+                    for (let _ = 0; _ < 5; _++) {
+                        this.placeCodewordPair(i, x_pos, y_pos);
                         y_pos--;
-                        goingLeft = true;
-                        continue;
+                        i++;
                     }
+                    i-=2;
+                    x_pos++;
                 }
-
-                else { // Going down
-
-                    if (y_pos == this.size - 1) {
-                        goingUp = true;
-                        
-                        x_pos--;
-                            this.array[this.coordToIndex(x_pos, y_pos)] = this.data[i] == 1 ? "1" : "0";                        
-                        
-
-                            x_pos--; i++;
-                            this.array[this.coordToIndex(x_pos, y_pos)] = this.data[i] == 1 ? "1" : "0";
-
-                        continue;
-
-                    }              
-
-                    else if (x_pos <= 8) { // At a finder square boundary
-                        
-                        if (y_pos == this.size - 9) {
-
-                            goingLeft = false;
-                            goingUp = true;
-                                                        
-                            x_pos--;
-                            this.array[this.coordToIndex(x_pos, y_pos)] = this.data[i] == 1 ? "1" : "0";
-
-                            x_pos--; i++;
-                            this.array[this.coordToIndex(x_pos, y_pos)] = this.data[i] == 1 ? "1" : "0";
-
-                            continue;
-
-                        }
-
-                        else { // Continue going up
-                            x_pos++;
-                            y_pos++;
-                            goingLeft = true;
-                            continue;
-                        }
-
-                    }
-
-                    else { // Continue going up
-                        x_pos++;
-                        y_pos++;
-                        goingLeft = true;
-                        continue;
-                    }
-
+                else if (y_pos == 6) { // Skip over timing pattern
+                    y_pos--;
+                    this.placeCodewordHorizontalPair(i, x_pos, y_pos);
+                    y_pos--;
+                } 
+                else {
+                    this.placeCodewordHorizontalPair(i, x_pos, y_pos);
+                    y_pos--;
                 }
+            } else if(!goingUp) { // Going down
+                if (y_pos == this.size - 1 && x_pos == 10) { // At lower timing boundary
+                    this.placeCodewordHorizontalPair(i, x_pos, y_pos);
+                    x_pos = 8;
+                    y_pos = this.size - 9;
+                    goingUp = true;
+                }
+                else if (y_pos == this.size - 9 && x_pos <= 8
+                        || y_pos == this.size - 1) { // At bounary
+                    this.placeCodewordHorizontalPair(i, x_pos, y_pos);
+
+                    x_pos -= 2;
+                    i+= 2;
+                    
+                    goingUp = true;
+                    this.placeCodewordHorizontalPair(i, x_pos, y_pos);
+                    y_pos--;
+                }
+                else if (alignmetPatternPositions.includes(y_pos + 3)
+                    && alignmetPatternPositions.includes(x_pos)
+                    && !(alignmetPatternPositions[0] == x_pos && alignmetPatternPositions[0] == y_pos + 3)
+                    && !(alignmetPatternPositions[0] == x_pos && alignmetPatternPositions[alignmetPatternPositions.length - 1] == y_pos + 3)
+                    && !(alignmetPatternPositions[0] == y_pos + 3 && alignmetPatternPositions[alignmetPatternPositions.length - 1] == x_pos)) 
+                    { // At alignment pattern
+                    console.log("Alignment pattern down");
+                    this.placeCodewordHorizontalPair(i, x_pos, y_pos);
+                    y_pos += 6;
+                }
+                else if (y_pos == 6) { // Skip over timing pattern 
+                    y_pos++;
+                    this.placeCodewordHorizontalPair(i, x_pos, y_pos);
+                    y_pos++;
+                } 
+                else {
+                    this.placeCodewordHorizontalPair(i, x_pos, y_pos);
+                    y_pos++;
+                }
+            }
+            if (x_pos < 0) {
+                return;
             }
         }
-
     }
 
 

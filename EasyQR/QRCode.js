@@ -1,6 +1,9 @@
 /*
 TODO:
  - Remove old comments and logs
+ - Versions with 2 groups do not work
+ - Small alignment squares do not always work. E.g. For larger codes
+ - v3+ doesn't seem to work on q or h mode
 */
 
 const CORRECTION_LEVELS = {
@@ -132,7 +135,7 @@ const ERROR_LOOKUP = {
     "ERC_BYTE_MODE_INVALID_DATA": "Some characters not allowed in Byte mode",
     "ERC_KANJI_MODE_INVALID_DATA": "Some characters not allowed in Kanji mode",
     "ERC_INPUT_TEXT_TOO_LONG": "The input value is too long for the selected mode",
-    "ERC_VERSION_NOT_SUPPORTED": "Only QR version 1 is currently supported"
+    "ERC_VERSION_NOT_SUPPORTED": "QR version with more than one error corretion group is not supported"
 };
 
 const MODE_REGEX = {
@@ -169,7 +172,7 @@ class QRCode {
         this.version = this.#getRequiredVersion();
         this.size = this.#getSize();
 
-        if (this.version > 1) {
+        if (VERSION_DATA[this.correctionLevel].blocksInGroup2[this.version - 1] > 0) {
             throw ERROR_LOOKUP['ERC_VERSION_NOT_SUPPORTED'];
         }
         
@@ -232,10 +235,8 @@ class QRCode {
             https://www.thonky.com/qr-code-tutorial/error-correction-coding
         */
         // 0. Split the codewords into groups
-        var index = 0;
-        this.group1 = this.getGroup1(codewords, index);
-        this.group2 = this.getGroup2(codewords, index);
-        
+        [this.group1, this.group2] = this.getGroups(codewords);
+
         log({'Group 1': this.group1, 'Group 2': this.group2});
         
 
@@ -243,35 +244,76 @@ class QRCode {
         let group1Coefficients = this.getGroupCoefficients(this.group1);
         let group2Coefficients = this.getGroupCoefficients(this.group2);
 
-        let numberOfErrorCorrectionCodeWords = VERSION_DATA[this.correctionLevel].ECCodeWordsPerBlock[this.version - 1];
+        let numberOfErrorCorrectionCodeWords = VERSION_DATA[this.correctionLevel].ECCodeWordsPerBlock[this.version - 1] 
+            * (VERSION_DATA[this.correctionLevel].blocksInGroup1[this.version - 1] 
+                + VERSION_DATA[this.correctionLevel].blocksInGroup2[this.version - 1]);
+        console.log(numberOfErrorCorrectionCodeWords, VERSION_DATA[this.correctionLevel].ECCodeWordsPerBlock[this.version - 1], VERSION_DATA[this.correctionLevel].blocksInGroup1[this.version - 1], VERSION_DATA[this.correctionLevel].blocksInGroup2[this.version - 1])
         let numberofCodeWords = this.getTotalNumberOfCodewords();
+
+        let group1Coefficients_Hex = [];
+        let group2Coefficients_Hex = [];
+
+        for (let i = 0; i < group1Coefficients.length; i++) {
+            group1Coefficients_Hex.push(intToHex(group1Coefficients[i]));
+        }
+
+        for (let i = 0; i < group2Coefficients.length; i++) {
+            group2Coefficients_Hex.push(intToHex(group2Coefficients[i]));
+        }
+
 
         log({ 
             'numberOfErrorCorrectionCodeWords': numberOfErrorCorrectionCodeWords,
             'group1Coefficients': group1Coefficients,
+            'group1Coefficients_Hex': group1Coefficients_Hex,
             'group2Coefficients': group2Coefficients,
+            'group2Coefficients_Hex': group2Coefficients_Hex,
             'numberofCodeWords': numberofCodeWords
         });
 
+        let groups = [];
+        for (let i = 0; i < group1Coefficients.length; i++) {
+            groups[i] = group1Coefficients[i];
+        }
+        for (let i = 0; i < group2Coefficients.length; i++) {
+            groups[group1Coefficients.length + i] = group2Coefficients[i];
+        }
 
         // 2. Get error correction codewords and add to our data codewords
         // https://dev.to/maxart2501/let-s-develop-a-qr-code-generator-part-ii-sequencing-data-4ae
-        let ECC = getEDC(group1Coefficients, numberOfErrorCorrectionCodeWords + numberofCodeWords);
+        let ECC = getEDC(groups, numberOfErrorCorrectionCodeWords + numberofCodeWords);
+        let ECC_Hex = []
 
         for (let i = 0; i < ECC.length; i++) {
             codewords += this.padCharacterLength(parseInt(ECC[i], 10).toString(2));
+            ECC_Hex.push(intToHex(ECC[i]));
         }
 
-        log({'ECC': ECC, 'codewords': codewords}, true);
+        log({'ECC': ECC, 'ECC_Hex':ECC_Hex, 'codewords': codewords}, true);
         
-        let qrArray = new QRArray(this.size, codewords, this.correctionLevel);
+        let qrArray = new QRArray(this, codewords);
 
         qrArray.addCodewords();
         qrArray.applyMasks();
         qrArray.addTimingPattern();
         qrArray.addFinderPattern();
         qrArray.addErrorLevel();
+        qrArray.addSmallFinderPatterns();
+        qrArray.addVersionInformation();
         
+        let x = 23;
+        let y = 8;
+        x = -1;
+        y = -1;
+        for (let i = 0; i < qrArray.array.length; i++) {
+            if  (i%this.size == x) {
+                qrArray.array[i] = 'X';
+            }
+            if  (Math.floor(i/this.size) == y) {
+                qrArray.array[i] = 'X';
+            }
+        }
+
         return qrArray.array;
     }
 
@@ -376,6 +418,12 @@ class QRCode {
         return codewords
     }
 
+    getGroups(codewords) {
+        let index = 0, group1, group2;
+        [group1, index] = this.getGroup1(codewords, index);
+        [group2, index] = this.getGroup2(codewords, index);
+        return [group1, group2];
+    }
 
     // First group of codewords
     getGroup1(output, index){
@@ -393,7 +441,7 @@ class QRCode {
                 index += 1;
             }
         }
-        return group1;
+        return [group1, index];
     }
 
     // Second group codewords
@@ -407,20 +455,21 @@ class QRCode {
 
             // For each codeword in block
             for (let j = 0; j < VERSION_DATA[this.correctionLevel].codewordsInGroup2Block[this.version - 1]; j++) {
-                // Add the codewrpd to the block
+                // Add the codeword to the block
                 group2[i].push(output.slice(index * 8, (index + 1) * 8));
                 index += 1;
             }
         }
-        return group2;
+        return [group2, index];
     }
 
     // Polynomial for the group
     getGroupCoefficients(group) {
         let coefficients = [];
         for (let i = 0; i < group.length; i++) {
-            for (let j = 0; j < group[i].length; j++)
-            coefficients.push(parseInt(group[i][j], 2));
+            for (let j = 0; j < group[i].length; j++) {
+                coefficients.push(parseInt(group[i][j], 2));
+            }
         }
         return coefficients;
     }
@@ -454,8 +503,8 @@ class QRCode {
 
         for (let i = 0; i < output.length; i++) {
             setTimeout(() => {
-                let x = 1;
-                let y = 9;
+                let x = 23;
+                let y = 23;
                 x = y = -1;
                 if (output[i] === "X" || i == this.size * (y) + x) {
                     this.canvasGrid.fillCell(i, '#FF0000');
