@@ -3,6 +3,8 @@ TODO:
  - Remove old comments and logs
  - Add finder patterns for v2+
  - Add all other masks and optimise
+ - Does not work for v22, H: Hello there, I need to make this a large qr code so that more things are used Hello there, I need to make this a large qr code so that more things are used Hello there, I need to make this a large qr code so that more things are used Hello there, I need to make this a large qr code so that more things are used Hello there, I need to make this a large qr code so that more things are used r code so that more things are used
+  > Incorrect codewords. I think this is due to the cahracter length map
 */
 
 class QRArray {
@@ -168,15 +170,15 @@ class QRArray {
         if(x < 0 || y < 0) {
             return;
         }
-        // console.log(index, x, y, this.data[index]);
+        console.log(index, x, y, this.data[index]);
         this.array[this.coordToIndex(x  , y)] = this.data[index];
 
-        // console.log(index + 1, x-1, y, this.data[index + 1]);
+        console.log(index + 1, x-1, y, this.data[index + 1]);
         this.array[this.coordToIndex(x-1, y)] = this.data[index + 1];
     }
 
     placeCodewordPair(index, x, y) {
-        // console.log(index, x, y, this.data[index]);
+        console.log(index, x, y, this.data[index]);
         this.array[this.coordToIndex(x, y)] = this.data[index];
     }
 
@@ -214,106 +216,141 @@ class QRArray {
             }
 
             if(goingUp) {
-                if (this.version >= 7 && y_pos == 7 && x_pos == 36) { // At version info
-                    this.placeCodewordHorizontalPair(i, x_pos, y_pos);
-                    y_pos = 0; x_pos = this.size - 12; i++;
-                    for (let j = 0; j < 6; j++) {
-                        this.array[this.coordToIndex(x_pos, y_pos + j)] = this.data[i];
-                        console.log(x_pos, y_pos + j, i)
-                        i++;
-                    }
-                    y_pos = 7; x_pos = 34;
-                    this.placeCodewordHorizontalPair(i, x_pos, y_pos);
-                    y_pos--;
-                    goingUp = false;
-                }
-                else if (y_pos == 9 && (x_pos > this.size - 8 || x_pos <= 8) 
-                        || y_pos == 0) { // At bounary
-                    this.placeCodewordHorizontalPair(i, x_pos, y_pos);
-                    i += 2;
 
-                    // Vertical timing pattern
-                    x_pos == 8 && y_pos == 9 ?  x_pos -= 3 :  x_pos -= 2;
-
-                    goingUp = false;
-                    this.placeCodewordHorizontalPair(i, x_pos, y_pos);
-                    y_pos++;
+                if (this.version >= 7 && y_pos == 7 && x_pos == this.size - 9) { // At version info
+                    [i, x_pos, y_pos, goingUp] = this.skipVersionInfo(i, x_pos, y_pos, goingUp);
                 }
-                else if (alignmetPatternPositions.includes(y_pos - 3)
-                    && alignmetPatternPositions.includes(x_pos - 2)) { // At alignment pattern
+
+                else if (y_pos == 9 && (x_pos > this.size - 8 || x_pos <= 8) || y_pos == 0) { // At bounary
+                    [i, x_pos, y_pos, goingUp] = this.placeBoundaryCells(i, x_pos, y_pos, goingUp);
+                }
+
+                else if (alignmetPatternPositions.includes(y_pos - 3) && alignmetPatternPositions.includes(x_pos - 2)) { // At alignment pattern
                     this.placeCodewordHorizontalPair(i, x_pos, y_pos);
                     y_pos -= 6;
                 }
-                else if (alignmetPatternPositions.includes(y_pos - 3)
-                    && alignmetPatternPositions.includes(x_pos + 2)
-                    && !(alignmetPatternPositions[0] == x_pos + 2 && alignmetPatternPositions[0] == y_pos - 3)
-                    && !(alignmetPatternPositions[0] == x_pos + 2 && alignmetPatternPositions[alignmetPatternPositions.length - 1] == y_pos - 3)
-                    && !(alignmetPatternPositions[0] == y_pos - 3 && alignmetPatternPositions[alignmetPatternPositions.length - 1] == x_pos + 2)
-                    ) { // At alignment pattern
-                    console.log(alignmetPatternPositions);
-                    console.log("Alignment pattern up");
-                    this.placeCodewordHorizontalPair(i, x_pos, y_pos);
-                    i += 2;
-                    x_pos--;
-                    y_pos--;
-                    for (let _ = 0; _ < 5; _++) {
-                        this.placeCodewordPair(i, x_pos, y_pos);
-                        y_pos--;
-                        i++;
-                    }
-                    i-=2;
-                    x_pos++;
+
+                else if (this.isAtAlignmentPattern(x_pos, y_pos, alignmetPatternPositions, goingUp)) { // At alignment pattern
+                        console.log("Alignment pattern up", x_pos, y_pos);
+                        this.placeCodewordHorizontalPair(i, x_pos, y_pos);
+                        i += 2; x_pos--;  y_pos--;
+                        for (let _ = 0; _ < 5; _++) {
+                            this.placeCodewordPair(i, x_pos, y_pos);
+                            y_pos--;
+                            i++;
+                        }
+                        i -= 2; x_pos++;
                 }
+
                 else if (y_pos == 6) { // Skip over timing pattern
                     y_pos--;
                     this.placeCodewordHorizontalPair(i, x_pos, y_pos);
                     y_pos--;
                 } 
+
                 else {
                     this.placeCodewordHorizontalPair(i, x_pos, y_pos);
                     y_pos--;
                 }
+
             } else if(!goingUp) { // Going down
+
                 if (y_pos == this.size - 1 && x_pos == 10) { // At lower timing boundary
                     this.placeCodewordHorizontalPair(i, x_pos, y_pos);
                     x_pos = 8;
                     y_pos = this.size - 9;
                     goingUp = true;
                 }
-                else if (y_pos == this.size - 9 && x_pos <= 8
-                        || y_pos == this.size - 1) { // At bounary
-                    this.placeCodewordHorizontalPair(i, x_pos, y_pos);
 
-                    x_pos -= 2;
-                    i+= 2;
-                    
-                    goingUp = true;
-                    this.placeCodewordHorizontalPair(i, x_pos, y_pos);
-                    y_pos--;
+                else if (y_pos == this.size - 9 && x_pos <= 8 || y_pos == this.size - 1) { // At bounary
+                    [i, x_pos, y_pos, goingUp] = this.placeBoundaryCells(i, x_pos, y_pos, goingUp);
                 }
-                else if (alignmetPatternPositions.includes(y_pos + 3)
-                    && alignmetPatternPositions.includes(x_pos)
-                    && !(alignmetPatternPositions[0] == x_pos && alignmetPatternPositions[0] == y_pos + 3)
-                    && !(alignmetPatternPositions[0] == x_pos && alignmetPatternPositions[alignmetPatternPositions.length - 1] == y_pos + 3)
-                    && !(alignmetPatternPositions[0] == y_pos + 3 && alignmetPatternPositions[alignmetPatternPositions.length - 1] == x_pos)) 
-                    { // At alignment pattern
-                    console.log("Alignment pattern down");
+
+                else if (this.isAtAlignmentPattern(x_pos, y_pos, alignmetPatternPositions, goingUp)) {
+                    console.log("Alignment pattern down:", x_pos, y_pos);
                     this.placeCodewordHorizontalPair(i, x_pos, y_pos);
                     y_pos += 6;
                 }
+
                 else if (y_pos == 6) { // Skip over timing pattern 
                     y_pos++;
                     this.placeCodewordHorizontalPair(i, x_pos, y_pos);
                     y_pos++;
                 } 
+
                 else {
                     this.placeCodewordHorizontalPair(i, x_pos, y_pos);
                     y_pos++;
                 }
+
             }
             if (x_pos < 0) {
                 return;
             }
+        }
+    }
+
+    skipVersionInfo(i, x_pos, y_pos, goingUp) {
+        if (goingUp) {
+            this.placeCodewordHorizontalPair(i, x_pos, y_pos);
+            y_pos = 0; x_pos = this.size - 12; i++;
+            for (let j = 0; j < 6; j++) {
+                this.array[this.coordToIndex(x_pos, y_pos + j)] = this.data[i];
+                console.log(x_pos, y_pos + j, i)
+                i++;
+            }
+            y_pos = 7; x_pos = this.size - 11;
+            this.placeCodewordHorizontalPair(i, x_pos, y_pos);
+            y_pos++;
+            goingUp = false;
+            return [i, x_pos, y_pos, goingUp];
+        }
+        else {
+            return;
+        }
+    }
+
+    placeBoundaryCells(i, x_pos, y_pos, goingUp) {
+        if (goingUp) {
+            this.placeCodewordHorizontalPair(i, x_pos, y_pos);
+            i += 2;
+    
+            // Vertical timing pattern
+            x_pos == 8 && y_pos == 9 ?  x_pos -= 3 :  x_pos -= 2;
+    
+            goingUp = false;
+            this.placeCodewordHorizontalPair(i, x_pos, y_pos);
+            y_pos++;
+            return [i, x_pos, y_pos, goingUp];
+        }
+        else {
+            this.placeCodewordHorizontalPair(i, x_pos, y_pos);
+
+            x_pos -= 2;
+            i+= 2;
+            
+            goingUp = true;
+            this.placeCodewordHorizontalPair(i, x_pos, y_pos);
+            y_pos--;
+            return [i, x_pos, y_pos, goingUp];
+        }
+    }
+
+    isAtAlignmentPattern(x_pos, y_pos, alignmetPatternPositions, goingUp) {
+        if (goingUp) {
+            return alignmetPatternPositions.includes(y_pos - 3)
+            && alignmetPatternPositions.includes(x_pos + 2)
+            && !(alignmetPatternPositions[0] == x_pos + 2 && alignmetPatternPositions[0] == y_pos - 3)
+            && !(alignmetPatternPositions[0] == x_pos + 2 && alignmetPatternPositions[alignmetPatternPositions.length - 1] == y_pos - 3)
+            && !(alignmetPatternPositions[0] == y_pos - 3 && alignmetPatternPositions[alignmetPatternPositions.length - 1] == x_pos + 2);
+        }
+        else {
+            return alignmetPatternPositions.includes(y_pos + 3)
+            && (alignmetPatternPositions.includes(x_pos) || alignmetPatternPositions.includes(x_pos + 1))
+            && !(alignmetPatternPositions[0] == x_pos && alignmetPatternPositions[0] == y_pos + 3)
+            && !(alignmetPatternPositions[0] == x_pos && alignmetPatternPositions[alignmetPatternPositions.length - 1] == y_pos + 3)
+            && !(alignmetPatternPositions[0] == x_pos + 1 && alignmetPatternPositions[alignmetPatternPositions.length - 1] == y_pos + 3)
+            && !(alignmetPatternPositions[0] == y_pos + 3 && alignmetPatternPositions[alignmetPatternPositions.length - 1] == x_pos)
         }
     }
 
@@ -361,15 +398,12 @@ class QRArray {
             let val;
             if (maskedFormatPoly[i] == 254) {
                 val = "1";
-                // val = "X";
             }
             else if (maskedFormatPoly[i] == 255) {
                 val = "0";
-                // val = "X";
             }
             else {
                 val = maskedFormatPoly[i].toString();
-                // val = "X";
             }
 
             let dx = 0;
@@ -385,15 +419,12 @@ class QRArray {
             let val;
             if (maskedFormatPoly[i] == 254) {
                 val = "1";
-                // val = "X";
             }
             else if (maskedFormatPoly[i] == 255) {
                 val = "0";
-                // val = "X";
             }
             else {
                 val = maskedFormatPoly[i].toString();
-                // val = "X";
             }
 
             let dy = 0;
@@ -401,7 +432,6 @@ class QRArray {
             
             this.array[this.coordToIndex(8, 15 - i - dy)] = val; // Top left - right
             this.array[this.coordToIndex(this.size - 15 + i, 8)] = val; // Top right - bottom
-            // console.log(i, val);
         }
     }
 

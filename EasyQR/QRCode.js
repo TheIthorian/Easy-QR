@@ -173,6 +173,7 @@ class QRCode {
         this.size = this.#getSize();
 
         if (VERSION_DATA[this.correctionLevel].blocksInGroup2[this.version - 1] > 0) {
+            console.log(this.version);
             throw ERROR_LOOKUP['ERC_VERSION_NOT_SUPPORTED'];
         }
         
@@ -236,7 +237,6 @@ class QRCode {
         */
         // 0. Split the codewords into groups
         [this.group1, this.group2] = this.getGroups(codewords);
-
         log({'Group 1': this.group1, 'Group 2': this.group2});
         
 
@@ -244,11 +244,9 @@ class QRCode {
         let group1Coefficients = this.getGroupCoefficients(this.group1);
         let group2Coefficients = this.getGroupCoefficients(this.group2);
 
-        let numberOfErrorCorrectionCodeWords = VERSION_DATA[this.correctionLevel].ECCodeWordsPerBlock[this.version - 1] 
-            * (VERSION_DATA[this.correctionLevel].blocksInGroup1[this.version - 1] 
-                + VERSION_DATA[this.correctionLevel].blocksInGroup2[this.version - 1]);
-        console.log(numberOfErrorCorrectionCodeWords, VERSION_DATA[this.correctionLevel].ECCodeWordsPerBlock[this.version - 1], VERSION_DATA[this.correctionLevel].blocksInGroup1[this.version - 1], VERSION_DATA[this.correctionLevel].blocksInGroup2[this.version - 1])
-        let numberofCodeWords = this.getTotalNumberOfCodewords();
+        let numberOfErrorCorrectionCodeWords = this.getNumberOfErrorCorrectionCodeWords();
+
+        let numberOfCodeWords = this.getTotalNumberOfCodewords();
 
         let group1Coefficients_Hex = [];
         let group2Coefficients_Hex = [];
@@ -268,7 +266,7 @@ class QRCode {
             'group1Coefficients_Hex': group1Coefficients_Hex,
             'group2Coefficients': group2Coefficients,
             'group2Coefficients_Hex': group2Coefficients_Hex,
-            'numberofCodeWords': numberofCodeWords
+            'numberofCodeWords': numberOfCodeWords
         });
 
         let groups = [];
@@ -281,7 +279,7 @@ class QRCode {
 
         // 2. Get error correction codewords and add to our data codewords
         // https://dev.to/maxart2501/let-s-develop-a-qr-code-generator-part-ii-sequencing-data-4ae
-        let ECC = getEDC(groups, numberOfErrorCorrectionCodeWords + numberofCodeWords);
+        let ECC = getEDC(groups, numberOfErrorCorrectionCodeWords + numberOfCodeWords);
         let ECC_Hex = []
 
         for (let i = 0; i < ECC.length; i++) {
@@ -301,18 +299,9 @@ class QRCode {
         qrArray.addSmallFinderPatterns();
         qrArray.addVersionInformation();
         
-        let x = 23;
-        let y = 8;
-        x = -1;
-        y = -1;
-        for (let i = 0; i < qrArray.array.length; i++) {
-            if  (i%this.size == x) {
-                qrArray.array[i] = 'X';
-            }
-            if  (Math.floor(i/this.size) == y) {
-                qrArray.array[i] = 'X';
-            }
-        }
+        // this.markColumn(qrArray, 2);
+        // this.markRow(qrArray, 8);
+        // this.markPoint(qrArray, 5, 5);
 
         return qrArray.array;
     }
@@ -486,6 +475,12 @@ class QRCode {
         return bCharacter;
     }
 
+    getNumberOfErrorCorrectionCodeWords() {
+        return VERSION_DATA[this.correctionLevel].ECCodeWordsPerBlock[this.version - 1] 
+            * (VERSION_DATA[this.correctionLevel].blocksInGroup1[this.version - 1] 
+                + VERSION_DATA[this.correctionLevel].blocksInGroup2[this.version - 1]);
+        }
+
     getTotalNumberOfCodewords() {
         // Found using // https://www.thonky.com/qr-code-tutorial/error-correction-table
         let blocksInGroup1 = VERSION_DATA[this.correctionLevel].blocksInGroup1[this.version - 1]; // Index 0 is version 1 data
@@ -495,6 +490,31 @@ class QRCode {
 
         return blocksInGroup1 * codewordsInGroup1Block + blocksInGroup2 * codewordsInGroup2Block;
     }
+
+    markColumn(qrArray, x) {
+        for (let i = 0; i < qrArray.array.length; i++) {
+            if  (i%this.size == x) {
+                qrArray.array[i] = 'X';
+            }
+        }
+    }
+
+    markRow(qrArray, y) {
+        for (let i = 0; i < qrArray.array.length; i++) {
+            if  (Math.floor(i/this.size) == y) {
+                qrArray.array[i] = 'X';
+            }
+        }
+    }
+
+    markPoint(qrArray, x, y) {
+        for (let i = 0; i < qrArray.array.length; i++) {
+            if  (Math.floor(i/this.size) == y && i%this.size == x) {
+                qrArray.array[i] = 'X';
+            }
+        }
+    }
+    
     
     // Displays the QR code on the canvas
     display() {
@@ -502,20 +522,15 @@ class QRCode {
         let output = this.generateCode();
 
         for (let i = 0; i < output.length; i++) {
-            setTimeout(() => {
-                let x = 23;
-                let y = 23;
-                x = y = -1;
-                if (output[i] === "X" || i == this.size * (y) + x) {
-                    this.canvasGrid.fillCell(i, '#FF0000');
-                }
-                else if (output[i] === "1") {
-                    this.canvasGrid.fillCell(i, '#000000');
-                }
-                else if (output[i] === "0") {
-                    this.canvasGrid.fillCell(i, '#FFFFFF');
-                }
-              }, i * 0);
+            if (output[i] === "X") {
+                this.canvasGrid.fillCell(i, '#FF0000');
+            }
+            else if (output[i] === "1") {
+                this.canvasGrid.fillCell(i, '#000000');
+            }
+            else if (output[i] === "0") {
+                this.canvasGrid.fillCell(i, '#FFFFFF');
+            }
         }
         return output;
     }
@@ -575,19 +590,12 @@ function div(a, b) {
 }
 
 function polyMul(poly1, poly2) {
-    // This is going to be the product polynomial, that we pre-allocate.
-    // We know it's going to be `poly1.length + poly2.length - 1` long.
     const coeffs = new Uint8Array(poly1.length + poly2.length - 1);
 
-    // Instead of executing all the steps in the example, we can jump to
-    // computing the coefficients of the result
     for (let index = 0; index < coeffs.length; index++) {
         let coeff = 0;
         for (let p1index = 0; p1index <= index; p1index++) {
             const p2index = index - p1index;
-            // We *should* do better here, as `p1index` and `p2index` could
-            // be out of range, but `mul` defined above will handle that case.
-            // Just beware of that when implementing in other languages.
             coeff ^= mul(poly1[p1index], poly2[p2index]);
         }
         coeffs[index] = coeff;
@@ -597,10 +605,8 @@ function polyMul(poly1, poly2) {
 
 function polyRest(dividend, divisor) {
     const quotientLength = dividend.length - divisor.length + 1;
-    // Let's just say that the dividend is the rest right away
     let rest = new Uint8Array(dividend);
     for (let count = 0; count < quotientLength; count++) {
-        // If the first term is 0, we can just skip this iteration
         if (rest[0]) {
             const factor = div(rest[0], divisor[0]);
             const subtr = new Uint8Array(rest.length);

@@ -17,7 +17,7 @@
         :root {
             --primary: rgb(116, 40, 170);
             --primary: rgb(40, 170, 142);
-            --primary-font-color: rgb(233, 233, 233);
+            --primary-font-color: rgb(240, 240, 240);
             --error: rgb(169, 35, 35);
         }
         body {
@@ -32,6 +32,7 @@
             background-color: var(--primary);
             height: 5em;
             color: var(--primary-font-color);
+            padding: 5px 5px 5px 5px;
         }
         .container {
             width: calc(100% - 40px);
@@ -81,6 +82,7 @@
         canvas {
             border: solid 2px var(--primary);
             --size: 256px;
+            --size: 512px;
             max-width: var(--size);
             max-height: var(--size);
             margin: 10px 0px 10px 0px;
@@ -98,7 +100,7 @@
         }
     </style>
     
-    <header><h1>EasyQR: QR Code Generator</h1></header>
+    <header><h1>QR Code Generator</h1></header>
     <div class="container">
         <p>Made using 
             <a href="https://www.thonky.com/qr-code-tutorial/data-encoding">
@@ -118,9 +120,9 @@
             <label for="error-correction">Error Correction:</label>
             <select name="error-correction" id="error-correction-select">
                 <option value="L" selected>Low</option>
-                <option value="M">Medium</option>
-                <option value="Q">Quartile</option>
-                <option value="H">High</option>
+                <option value="M" >Medium</option>
+                <option value="Q" disabled>Quartile</option>
+                <option value="H" >High</option>
             </select>
         </div>
         <button id="submit">Encode</button>
