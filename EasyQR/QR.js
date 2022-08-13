@@ -1,6 +1,8 @@
 import { QRCode } from './QRCode.js';
 
-// Wrapper class for the QRCode
+/**
+ * Controller class to generate and display QR codes.
+ */
 export class QR {
     constructor(canvasId, data, mode = 'Byte', correctionLevel = 'L') {
         this.qrCode = new QRCode(canvasId, data, mode, correctionLevel);
