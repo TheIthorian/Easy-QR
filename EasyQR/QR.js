@@ -1,5 +1,7 @@
-// Interface for the QRCode class
-class QR {
+import { QRCode } from './QRCode.js';
+
+// Wrapper class for the QRCode
+export class QR {
     constructor(canvasId, data, mode = 'Byte', correctionLevel = 'L') {
         this.qrCode = new QRCode(canvasId, data, mode, correctionLevel);
     }

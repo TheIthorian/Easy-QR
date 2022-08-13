@@ -1,3 +1,5 @@
+import { polyRest } from './Polynomial.js';
+
 /*
 TODO:
  - Remove old comments and logs
@@ -7,7 +9,7 @@ TODO:
   > Incorrect codewords. I think this is due to the cahracter length map
 */
 
-class QRArray {
+export class QRArray {
     constructor(qrCode, codewords) {
         this.data = codewords;
         this.correctionLevel = qrCode.correctionLevel;

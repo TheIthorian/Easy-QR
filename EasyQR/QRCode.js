@@ -1,3 +1,7 @@
+import { CanvasGrid } from './CanvasGrid.js';
+import { getEDC } from './Polynomial.js';
+import { QRArray } from './QRArray.js';
+
 /*
 TODO:
  - Remove old comments and logs
@@ -301,16 +305,7 @@ const MODE_REGEX = {
     Kanji: /^[\p{Script_Extensions=Han}\p{Script_Extensions=Hiragana}\p{Script_Extensions=Katakana}]*$/u,
 };
 
-// Initialise reed-soloman generator polynomial constants
-const LOG = new Uint8Array(256);
-const EXP = new Uint8Array(256);
-for (let exponent = 1, value = 1; exponent < 256; exponent++) {
-    value = value > 127 ? (value << 1) ^ 285 : value << 1;
-    LOG[value] = exponent % 255;
-    EXP[exponent % 255] = value;
-}
-
-class QRCode {
+export class QRCode {
     constructor(canvasId, data, mode = 'Byte', correctionLevel = 'L') {
         this.canvasId = canvasId; // The HTML canvas's ID to draw the results :: String
         this.data = data; // Data to be encoded :: String
@@ -739,7 +734,7 @@ function intToHex(iInt) {
 
 // Adds data to the global log
 function log(dict, print = false) {
-    for (key of Object.keys(dict)) {
+    for (const key of Object.keys(dict)) {
         DATA_LOG[key] = dict[key];
     }
     if (print) {
@@ -750,57 +745,4 @@ function log(dict, print = false) {
 // Prints the global log
 function printLog() {
     console.log('DATA_LOG: ', DATA_LOG);
-}
-
-function mul(a, b) {
-    return a && b ? EXP[(LOG[a] + LOG[b]) % 255] : 0;
-}
-
-function div(a, b) {
-    return EXP[(LOG[a] + LOG[b] * 254) % 255];
-}
-
-function polyMul(poly1, poly2) {
-    const coeffs = new Uint8Array(poly1.length + poly2.length - 1);
-
-    for (let index = 0; index < coeffs.length; index++) {
-        let coeff = 0;
-        for (let p1index = 0; p1index <= index; p1index++) {
-            const p2index = index - p1index;
-            coeff ^= mul(poly1[p1index], poly2[p2index]);
-        }
-        coeffs[index] = coeff;
-    }
-    return coeffs;
-}
-
-function polyRest(dividend, divisor) {
-    const quotientLength = dividend.length - divisor.length + 1;
-    let rest = new Uint8Array(dividend);
-    for (let count = 0; count < quotientLength; count++) {
-        if (rest[0]) {
-            const factor = div(rest[0], divisor[0]);
-            const subtr = new Uint8Array(rest.length);
-            subtr.set(polyMul(divisor, [factor]), 0);
-            rest = rest.map((value, index) => value ^ subtr[index]).slice(1);
-        } else {
-            rest = rest.slice(1);
-        }
-    }
-    return rest;
-}
-
-function getGeneratorPoly(degree) {
-    let lastPoly = new Uint8Array([1]);
-    for (let i = 0; i < degree; i++) {
-        lastPoly = polyMul(lastPoly, new Uint8Array([1, EXP[i]]));
-    }
-    return lastPoly;
-}
-
-function getEDC(data, codewords) {
-    const degree = codewords - data.length;
-    const messagePoly = new Uint8Array(codewords);
-    messagePoly.set(data, 0);
-    return polyRest(messagePoly, getGeneratorPoly(degree));
 }

@@ -1,3 +1,5 @@
+import { QR } from '../EasyQR/QR.js';
+
 window.addEventListener('load', function () {
     document.getElementById('submit').addEventListener('click', function () {
         removeError();

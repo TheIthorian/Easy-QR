@@ -1,4 +1,4 @@
-class CanvasGrid {
+export class CanvasGrid {
     // canvasId: DOM Id for canvas
     // size: Length in number of cells
     constructor(canvasId, size) {
