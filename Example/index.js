@@ -4,13 +4,18 @@ window.addEventListener('load', function () {
     document.getElementById('submit').addEventListener('click', function () {
         removeError();
 
-        let data = document.getElementById('input').value.trim();
-        let mode = document.getElementById('mode-select').value;
-        let errorCorrection = document.getElementById('error-correction-select').value;
-        let qr;
+        const elements = {
+            textInput: document.getElementById('input'),
+            modeInput: document.getElementById('mode-select'),
+            errorCorrectionInput: document.getElementById('error-correction-select'),
+        };
+
+        const data = elements.textInput.value.trim();
+        const mode = elements.modeInput.value;
+        const errorCorrection = elements.errorCorrectionInput.value;
 
         try {
-            qr = new QR('qr', data, mode, errorCorrection);
+            const qr = new QR('qr', data, mode, errorCorrection);
             qr.printCodeToCanvas();
         } catch (err) {
             console.log(err);
@@ -20,13 +25,13 @@ window.addEventListener('load', function () {
 });
 
 function addError(errorText) {
-    let errorDiv = document.getElementById('error');
+    const errorDiv = document.getElementById('error');
     errorDiv.innerText = errorText;
     errorDiv.classList.add('active');
 }
 
 function removeError() {
-    let errorDiv = document.getElementById('error');
+    const errorDiv = document.getElementById('error');
     errorDiv.innerText = '';
     errorDiv.classList.remove('active');
 }
