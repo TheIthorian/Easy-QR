@@ -1,6 +1,7 @@
 import { CanvasGrid } from './CanvasGrid.js';
 import { getEDC } from './Polynomial.js';
 import { QRArray } from './QRArray.js';
+import * as Util from './util';
 
 /*
 TODO:
@@ -406,11 +407,11 @@ export class QRCode {
         let group2Coefficients_Hex = [];
 
         for (let i = 0; i < group1Coefficients.length; i++) {
-            group1Coefficients_Hex.push(intToHex(group1Coefficients[i]));
+            group1Coefficients_Hex.push(Util.intToHex(group1Coefficients[i]));
         }
 
         for (let i = 0; i < group2Coefficients.length; i++) {
-            group2Coefficients_Hex.push(intToHex(group2Coefficients[i]));
+            group2Coefficients_Hex.push(Util.intToHex(group2Coefficients[i]));
         }
 
         log({
@@ -437,7 +438,7 @@ export class QRCode {
 
         for (let i = 0; i < ECC.length; i++) {
             codewords += this.padCharacterLength(parseInt(ECC[i], 10).toString(2));
-            ECC_Hex.push(intToHex(ECC[i]));
+            ECC_Hex.push(Util.intToHex(ECC[i]));
         }
 
         log({ ECC: ECC, ECC_Hex: ECC_Hex, codewords: codewords }, true);
@@ -525,7 +526,7 @@ export class QRCode {
 
             // Turn each character into binary and add it to the output
             for (let i = 0; i < this.data.length; i++) {
-                let bChar = this.padCharacterLength(toBinary(this.data[i]));
+                let bChar = this.padCharacterLength(Util.toBinary(this.data[i]));
                 output += bChar;
                 DATA_LOG['bData'] += bChar;
             }
@@ -708,28 +709,6 @@ export class QRCode {
 // Returns the character limit for the mode and correctionLevel
 function getCharacterLimit(mode, correctionLevel) {
     return Math.max(VERSION_DATA[correctionLevel].ModeSize[mode]);
-}
-
-// Converts a string to binary
-function toBinary(sInput) {
-    sInput = sInput.toString();
-
-    var output = '';
-    for (var i = 0; i < sInput.length; i++) {
-        output += sInput[i].charCodeAt(0).toString(2);
-    }
-
-    return output;
-}
-
-// Converts a binary string to hexadecimal
-function binaryToHex(sBinary) {
-    return parseInt(sBinary, 2).toString(16);
-}
-
-// Converts an int to hexadecimal
-function intToHex(iInt) {
-    return parseInt(iInt, 10).toString(16);
 }
 
 // Adds data to the global log
