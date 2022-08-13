@@ -1,18 +1,16 @@
-window.addEventListener("load", function(){
-    document.getElementById("submit").addEventListener("click", function(){
-
+window.addEventListener('load', function () {
+    document.getElementById('submit').addEventListener('click', function () {
         removeError();
 
-        let data = document.getElementById("input").value.trim();
-        let mode = document.getElementById("mode-select").value;
-        let errorCorrection = document.getElementById("error-correction-select").value;
+        let data = document.getElementById('input').value.trim();
+        let mode = document.getElementById('mode-select').value;
+        let errorCorrection = document.getElementById('error-correction-select').value;
         let qr;
-        
+
         try {
-            qr = new QR("qr", data, mode, errorCorrection); 
+            qr = new QR('qr', data, mode, errorCorrection);
             qr.printCodeToCanvas();
-        }
-        catch (err) {
+        } catch (err) {
             console.log(err);
             addError(err);
         }
@@ -20,13 +18,13 @@ window.addEventListener("load", function(){
 });
 
 function addError(errorText) {
-    let errorDiv = document.getElementById("error");
+    let errorDiv = document.getElementById('error');
     errorDiv.innerText = errorText;
-    errorDiv.classList.add("active");
+    errorDiv.classList.add('active');
 }
 
 function removeError() {
-    let errorDiv = document.getElementById("error");
-    errorDiv.innerText = "";
-    errorDiv.classList.remove("active");
+    let errorDiv = document.getElementById('error');
+    errorDiv.innerText = '';
+    errorDiv.classList.remove('active');
 }

@@ -3,8 +3,7 @@
 <html>
     <head>
         <title>QR Code Generator</title>
-        <meta name="viewport" 
-          content="width=device-width, initial-scale=1">  
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <script src="index.js"></script>
         <script src="../EasyQR/CanvasGrid.js"></script>
         <script src="../EasyQR/QRArray.js"></script>
@@ -45,7 +44,7 @@
             flex-direction: column;
             width: 100%;
         }
-        input[type="text"] {
+        input[type='text'] {
             width: 100%;
             padding: 3px;
         }
@@ -76,7 +75,7 @@
             margin: 10px 0px 10px 0px;
             cursor: pointer;
         }
-        button:hover{
+        button:hover {
             filter: brightness(115%);
         }
         canvas {
@@ -99,10 +98,11 @@
             display: block;
         }
     </style>
-    
+
     <header><h1>QR Code Generator</h1></header>
     <div class="container">
-        <p>Made using 
+        <p
+            >Made using
             <a href="https://www.thonky.com/qr-code-tutorial/data-encoding">
                 https://www.thonky.com/qr-code-tutorial/data-encoding
             </a>
@@ -114,15 +114,15 @@
             <select name="mode" id="mode-select">
                 <option value="Numeric" disabled>Numeric</option>
                 <option value="Alphanumeric" disabled>Alphanumeric</option>
-                <option value="Byte" >Byte</option>
+                <option value="Byte">Byte</option>
                 <option value="Kanji" disabled>Kanji</option>
             </select>
             <label for="error-correction">Error Correction:</label>
             <select name="error-correction" id="error-correction-select">
                 <option value="L" selected>Low</option>
-                <option value="M" >Medium</option>
+                <option value="M">Medium</option>
                 <option value="Q" disabled>Quartile</option>
-                <option value="H" >High</option>
+                <option value="H">High</option>
             </select>
         </div>
         <button id="submit">Encode</button>

@@ -4,14 +4,17 @@ class CanvasGrid {
     constructor(canvasId, size) {
         this.canvasElement = document.getElementById(canvasId);
 
-        this.cellColor = '#000000';        
+        this.cellColor = '#000000';
 
         this.width = size;
         this.height = size;
-        
+
         this.cellArray = [];
 
-        this.canvasElement.width = Math.min(document.body.clientWidth / 2, document.body.clientHeight / 2);
+        this.canvasElement.width = Math.min(
+            document.body.clientWidth / 2,
+            document.body.clientHeight / 2
+        );
         this.canvasElement.height = this.canvasElement.width;
 
         this.tileSize = this.canvasElement.width / size;
@@ -23,7 +26,7 @@ class CanvasGrid {
     findPosition(index) {
         let x = index % this.width;
         let y = Math.floor(index / this.width);
-        return[x, y];
+        return [x, y];
     }
 
     findIndex(x, y) {
@@ -34,12 +37,12 @@ class CanvasGrid {
     }
 
     // Drawing functions
-    fillCell(n, color) {        
+    fillCell(n, color) {
         let coords = this.findPosition(n);
         let x = coords[0] * this.tileSize;
         let y = coords[1] * this.tileSize;
 
-        var context = this.canvasElement.getContext("2d");
+        var context = this.canvasElement.getContext('2d');
 
         context.beginPath();
         context.fillStyle = color;
@@ -52,7 +55,7 @@ class CanvasGrid {
         let x = coords[0] * this.tileSize;
         let y = coords[1] * this.tileSize;
 
-        var context = this.canvasElement.getContext("2d");
+        var context = this.canvasElement.getContext('2d');
 
         context.beginPath();
         context.fillStyle = '#000000';

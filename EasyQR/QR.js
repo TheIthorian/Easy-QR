@@ -1,6 +1,5 @@
 // Interface for the QRCode class
 class QR {
-
     constructor(canvasId, data, mode = 'Byte', correctionLevel = 'L') {
         this.qrCode = new QRCode(canvasId, data, mode, correctionLevel);
     }
@@ -20,7 +19,7 @@ class QR {
 
     setMode(mode) {
         if (!MODES[mode]) {
-            throw "Invalid mode";
+            throw 'Invalid mode';
         } else {
             this.qrCode.mode = mode;
             return this.qrCode.mode;
@@ -33,7 +32,7 @@ class QR {
 
     setCorrectionLevel(correctionLevel) {
         if (!CORRECTION_LEVELS[correctionLevel]) {
-            throw "Invalid correction level";
+            throw 'Invalid correction level';
         } else {
             this.qrCode.correctionLevel = correctionLevel;
             return this.qrCode.correctionLevel;
@@ -54,7 +53,7 @@ class QR {
 
     getModeRegex(mode) {
         if (!MODES[mode]) {
-            throw "Invalid mode";
+            throw 'Invalid mode';
         } else {
             return MODE_REGEX[mode];
         }
