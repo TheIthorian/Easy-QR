@@ -1,7 +1,15 @@
-import { CanvasGrid } from './CanvasGrid.js';
-import { getEDC } from './Polynomial.js';
-import { QRArray } from './QRArray.js';
-import * as Util from './util.js';
+// import { CELL_COLORS, DEFAULT_COLOR } from './constants.js';
+const CELL_COLORS = {
+    1: '#000000',
+    0: '#FFFFFF',
+};
+
+const DEFAULT_COLOR = '#FF0000';
+
+import { CanvasGrid } from './CanvasGrid';
+import { getEDC } from './Polynomial';
+import { QRArray } from './QRArray';
+import * as Util from './util';
 
 /*
 TODO:
@@ -307,13 +315,24 @@ const MODE_REGEX = {
 };
 
 export class QRCode {
+    canvasId: string;
+    data: string;
+    mode: string;
+    correctionLevel: string;
+    version: number;
+    size: number;
+    canvasGrid: CanvasGrid;
+    group1: string[];
+    group2: string[];
+    totalBits: number;
+
     constructor(canvasId, data, mode = 'Byte', correctionLevel = 'L') {
         this.canvasId = canvasId; // The HTML canvas's ID to draw the results :: String
         this.data = data; // Data to be encoded :: String
         this.mode = mode; // The type of encoding - depends on which characters are allowed :: String
         this.correctionLevel = correctionLevel;
 
-        let validateResult = this.validateData();
+        let validateResult = this.validateData('') as number[]; // fix
         if (!validateResult[0]) {
             throw ERROR_LOOKUP[validateResult[1]];
         }
@@ -337,7 +356,9 @@ export class QRCode {
             true
         );
 
-        this.canvasGrid = new CanvasGrid(this.canvasId, this.size);
+        if (this.canvasId) {
+            this.canvasGrid = new CanvasGrid(this.canvasId, this.size);
+        }
     }
 
     #getRequiredVersion() {
@@ -437,8 +458,8 @@ export class QRCode {
         let ECC_Hex = [];
 
         for (let i = 0; i < ECC.length; i++) {
-            codewords += this.padCharacterLength(parseInt(ECC[i], 10).toString(2));
-            ECC_Hex.push(Util.intToHex(ECC[i]));
+            codewords += this.padCharacterLength(parseInt(ECC['' + i], 10).toString(2));
+            ECC_Hex.push(Util.intToHex(ECC['' + i]));
         }
 
         log({ ECC: ECC, ECC_Hex: ECC_Hex, codewords: codewords }, true);
@@ -689,17 +710,12 @@ export class QRCode {
 
     // Displays the QR code on the canvas
     display() {
-        let output = this.generateCode();
+        const output = this.generateCode();
 
-        for (let i = 0; i < output.length; i++) {
-            if (output[i] === 'X') {
-                this.canvasGrid.fillCell(i, '#FF0000');
-            } else if (output[i] === '1') {
-                this.canvasGrid.fillCell(i, '#000000');
-            } else if (output[i] === '0') {
-                this.canvasGrid.fillCell(i, '#FFFFFF');
-            }
-        }
+        output.forEach((value, index) => {
+            this.canvasGrid.fillCell(index, CELL_COLORS[value] ?? DEFAULT_COLOR);
+        });
+
         return output;
     }
 }
