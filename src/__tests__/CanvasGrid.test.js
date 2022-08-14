@@ -2,7 +2,8 @@ import { CanvasGrid } from '../CanvasGrid';
 
 const CANVAS_ID = '#canvasId';
 const CANVAS_GRID_SIZE = 10;
-const mockCanvasElement = {};
+const mockContext = { beginPath: jest.fn(), fillRect: jest.fn(), stroke: jest.fn() };
+const mockCanvasElement = { getContext: jest.fn().mockReturnValue(mockContext) };
 
 jest.spyOn(document, 'getElementById').mockReturnValue(mockCanvasElement);
 
@@ -28,6 +29,10 @@ describe('constructor', () => {
 describe('CanvasGrid', () => {
     const canvasGrid = new CanvasGrid(CANVAS_ID, CANVAS_GRID_SIZE);
 
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
     describe('findPosition', () => {
         it.each`
             index | x    | y
@@ -52,6 +57,7 @@ describe('CanvasGrid', () => {
         it.each`
             index | x    | y
             ${0}  | ${0} | ${0}
+            ${5}  | ${5} | ${0}
             ${9}  | ${9} | ${0}
             ${10} | ${0} | ${1}
             ${99} | ${9} | ${9}
@@ -96,6 +102,40 @@ describe('CanvasGrid', () => {
 
             // Then
             expect(index).toBe(-1);
+        });
+    });
+
+    describe('fillCell', () => {
+        it('correctly fills a cell in the canvas', () => {
+            // Given
+            const red = '#ff0000';
+
+            // When
+            canvasGrid.fillCell(5, red); // Index of 5 is (5, 0)
+
+            // Then
+            expect(mockCanvasElement.getContext).toHaveBeenCalledWith('2d');
+            expect(mockContext.beginPath).toHaveBeenCalledWith();
+            expect(mockContext.fillStyle).toBe(red);
+            expect(mockContext.fillRect).toHaveBeenCalledWith(50, 0, 10, 10);
+            expect(mockContext.stroke).toHaveBeenCalledWith();
+        });
+    });
+
+    describe('unFillCell', () => {
+        it('correctly sets the cell color to white', () => {
+            // Given
+            const white = '#000000';
+
+            // When
+            canvasGrid.unfillCell(5); // Index of 5 is (5, 0)
+
+            // Then
+            expect(mockCanvasElement.getContext).toHaveBeenCalledWith('2d');
+            expect(mockContext.beginPath).toHaveBeenCalledWith();
+            expect(mockContext.fillStyle).toBe(white);
+            expect(mockContext.fillRect).toHaveBeenCalledWith(50, 0, 10, 10);
+            expect(mockContext.stroke).toHaveBeenCalledWith();
         });
     });
 });
