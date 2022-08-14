@@ -1,4 +1,4 @@
-import { QRCode } from './QRCode.js';
+import { QRCode } from './QRCode';
 
 /**
  * Controller class to generate and display QR codes.
