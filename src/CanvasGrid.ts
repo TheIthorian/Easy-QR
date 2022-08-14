@@ -1,8 +1,18 @@
+/**
+ *
+ */
 export class CanvasGrid {
+    canvasElement: HTMLCanvasElement;
+    cellColor: string;
+    width: number;
+    height: number;
+    cellArray: Array<string>;
+    tileSize: number;
+
     // canvasId: DOM Id for canvas
     // size: Length in number of cells
-    constructor(canvasId, size) {
-        this.canvasElement = document.getElementById(canvasId);
+    constructor(canvasId: string, size: number) {
+        this.canvasElement = document.getElementById(canvasId) as HTMLCanvasElement;
 
         this.cellColor = '#000000';
 
@@ -23,13 +33,13 @@ export class CanvasGrid {
     }
 
     // Helper funcitons
-    findPosition(index) {
+    findPosition(index: number) {
         let x = index % this.width;
         let y = Math.floor(index / this.width);
         return [x, y];
     }
 
-    findIndex(x, y) {
+    findIndex(x: number, y: number) {
         if (x >= this.width || y >= this.height || x < 0 || y < 0) {
             return -1;
         }
@@ -37,7 +47,7 @@ export class CanvasGrid {
     }
 
     // Drawing functions
-    fillCell(n, color) {
+    fillCell(n: number, color: string) {
         let coords = this.findPosition(n);
         let x = coords[0] * this.tileSize;
         let y = coords[1] * this.tileSize;
@@ -50,7 +60,7 @@ export class CanvasGrid {
         context.stroke();
     }
 
-    unfillCell(n) {
+    unfillCell(n: number) {
         this.fillCell(n, '#000000');
     }
 }
