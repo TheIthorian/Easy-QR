@@ -6,7 +6,12 @@ import { QRCode } from './QRCode.js';
 export class QR {
     qrCode: QRCode;
 
-    constructor(canvasId, data, mode = 'Byte', correctionLevel = 'L') {
+    constructor(
+        canvasId: string,
+        data: string,
+        mode: string = 'Byte',
+        correctionLevel: string = 'L'
+    ) {
         this.qrCode = new QRCode(canvasId, data, mode, correctionLevel);
     }
 
@@ -14,7 +19,7 @@ export class QR {
         return this.qrCode.canvasId;
     }
 
-    setCanvasId(canvasId) {
+    setCanvasId(canvasId: string) {
         this.qrCode.canvasId = canvasId;
         return this.qrCode.canvasId;
     }
@@ -65,7 +70,7 @@ export class QR {
     //     }
     // }
 
-    printCodeToCanvas(canvasId) {
+    printCodeToCanvas(canvasId: string) {
         // if (canvasId) {
         //     this.qrCode.setCanvasId(canvasId);
         // }
