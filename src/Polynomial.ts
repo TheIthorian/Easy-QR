@@ -19,7 +19,8 @@ function div(a: number, b: number): number {
 function polyMul(poly1: Uint8Array, poly2: Uint8Array): Uint8Array {
     const coefficients = new Uint8Array(poly1.length + poly2.length - 1);
 
-    for (let index = 0, coefficient = 0; index < coefficients.length; index++) {
+    for (let index = 0; index < coefficients.length; index++) {
+        let coefficient = 0;
         for (let p1Index = 0; p1Index <= index; p1Index++) {
             const p2Index = index - p1Index;
             coefficient ^= mul(poly1[p1Index], poly2[p2Index]);
