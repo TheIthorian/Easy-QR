@@ -4,6 +4,8 @@ import { QRCode } from './QRCode.js';
  * Controller class to generate and display QR codes.
  */
 export class QR {
+    qrCode: QRCode;
+
     constructor(canvasId, data, mode = 'Byte', correctionLevel = 'L') {
         this.qrCode = new QRCode(canvasId, data, mode, correctionLevel);
     }
@@ -21,27 +23,27 @@ export class QR {
         return this.qrCode.mode;
     }
 
-    setMode(mode) {
-        if (!MODES[mode]) {
-            throw 'Invalid mode';
-        } else {
-            this.qrCode.mode = mode;
-            return this.qrCode.mode;
-        }
-    }
+    // setMode(mode) {
+    //     if (!MODES[mode]) {
+    //         throw 'Invalid mode';
+    //     } else {
+    //         this.qrCode.mode = mode;
+    //         return this.qrCode.mode;
+    //     }
+    // }
 
     getCorrectionLevel() {
         return this.qrCode.correctionLevel;
     }
 
-    setCorrectionLevel(correctionLevel) {
-        if (!CORRECTION_LEVELS[correctionLevel]) {
-            throw 'Invalid correction level';
-        } else {
-            this.qrCode.correctionLevel = correctionLevel;
-            return this.qrCode.correctionLevel;
-        }
-    }
+    // setCorrectionLevel(correctionLevel) {
+    //     if (!CORRECTION_LEVELS[correctionLevel]) {
+    //         throw 'Invalid correction level';
+    //     } else {
+    //         this.qrCode.correctionLevel = correctionLevel;
+    //         return this.qrCode.correctionLevel;
+    //     }
+    // }
 
     getVersion() {
         return this.qrCode.version;
@@ -55,18 +57,18 @@ export class QR {
         return this.qrCode.generateCode();
     }
 
-    getModeRegex(mode) {
-        if (!MODES[mode]) {
-            throw 'Invalid mode';
-        } else {
-            return MODE_REGEX[mode];
-        }
-    }
+    // getModeRegex(mode) {
+    //     if (!MODES[mode]) {
+    //         throw 'Invalid mode';
+    //     } else {
+    //         return MODE_REGEX[mode];
+    //     }
+    // }
 
     printCodeToCanvas(canvasId) {
-        if (canvasId) {
-            this.qrCode.setCanvasId(canvasId);
-        }
+        // if (canvasId) {
+        //     this.qrCode.setCanvasId(canvasId);
+        // }
         this.qrCode.display();
     }
 }
