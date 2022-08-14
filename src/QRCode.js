@@ -1,7 +1,7 @@
 import { CanvasGrid } from './CanvasGrid.js';
 import { getEDC } from './Polynomial.js';
 import { QRArray } from './QRArray.js';
-import * as Util from './util';
+import * as Util from './util.js';
 
 /*
 TODO:

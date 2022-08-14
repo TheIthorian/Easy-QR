@@ -1,1 +1,1 @@
-export { QR } from './QR';
+export { QR } from './QR.js';
