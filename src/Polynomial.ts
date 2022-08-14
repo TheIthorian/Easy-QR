@@ -1,6 +1,7 @@
 // Initialise reed-soloman generator polynomial constants
 const LOG = new Uint8Array(256);
 const EXP = new Uint8Array(256);
+
 for (let exponent = 1, value = 1; exponent < 256; exponent++) {
     value = value > 127 ? (value << 1) ^ 285 : value << 1;
     LOG[value] = exponent % 255;
