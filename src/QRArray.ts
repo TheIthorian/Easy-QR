@@ -1,4 +1,4 @@
-import { polyRest } from './Polynomial.js';
+import { polyRest } from './Polynomial';
 
 /*
 TODO:
@@ -10,6 +10,12 @@ TODO:
 */
 
 export class QRArray {
+    data: string;
+    correctionLevel: string;
+    array: string[];
+    size: number;
+    version: number;
+
     constructor(qrCode, codewords) {
         this.data = codewords;
         this.correctionLevel = qrCode.correctionLevel;
@@ -165,7 +171,8 @@ export class QRArray {
 
     getVersionInformation(version) {
         const VERSION_DIVISOR = new Uint8Array([1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1]);
-        const poly = Uint8Array.from(version.toString(2).padStart(6, '0') + '000000000000');
+        const polyArray = version.toString(2).padStart(6, '0') + '000000000000';
+        const poly = Uint8Array.from(polyArray.split('').map(char => parseInt(char)));
         poly.set(polyRest(poly, VERSION_DIVISOR), 6);
         return poly;
     }
@@ -174,15 +181,15 @@ export class QRArray {
         if (x < 0 || y < 0) {
             return;
         }
-        console.log(index, x, y, this.data[index]);
+        // console.log(index, x, y, this.data[index]);
         this.array[this.coordToIndex(x, y)] = this.data[index];
 
-        console.log(index + 1, x - 1, y, this.data[index + 1]);
+        // console.log(index + 1, x - 1, y, this.data[index + 1]);
         this.array[this.coordToIndex(x - 1, y)] = this.data[index + 1];
     }
 
     placeCodewordPair(index, x, y) {
-        console.log(index, x, y, this.data[index]);
+        // console.log(index, x, y, this.data[index]);
         this.array[this.coordToIndex(x, y)] = this.data[index];
     }
 
@@ -206,8 +213,8 @@ export class QRArray {
 
         let alignmetPatternPositions = this.getAlignmentPatternPositions();
 
-        console.log(this.getAlignmentPatternPositions());
-        console.log(this.version, this.data.length);
+        // console.log(this.getAlignmentPatternPositions());
+        // console.log(this.version, this.data.length);
 
         for (let i = 0; i < this.data.length; i += 2) {
             if (i == 0) {
@@ -234,7 +241,7 @@ export class QRArray {
                     this.isAtAlignmentPattern(x_pos, y_pos, alignmetPatternPositions, goingUp)
                 ) {
                     // At alignment pattern
-                    console.log('Alignment pattern up', x_pos, y_pos);
+                    // console.log('Alignment pattern up', x_pos, y_pos);
                     this.placeCodewordHorizontalPair(i, x_pos, y_pos);
                     i += 2;
                     x_pos--;
@@ -270,7 +277,7 @@ export class QRArray {
                 } else if (
                     this.isAtAlignmentPattern(x_pos, y_pos, alignmetPatternPositions, goingUp)
                 ) {
-                    console.log('Alignment pattern down:', x_pos, y_pos);
+                    // console.log('Alignment pattern down:', x_pos, y_pos);
                     this.placeCodewordHorizontalPair(i, x_pos, y_pos);
                     y_pos += 6;
                 } else if (y_pos == 6) {
@@ -297,7 +304,7 @@ export class QRArray {
             i++;
             for (let j = 0; j < 6; j++) {
                 this.array[this.coordToIndex(x_pos, y_pos + j)] = this.data[i];
-                console.log(x_pos, y_pos + j, i);
+                // console.log(x_pos, y_pos + j, i);
                 i++;
             }
             y_pos = 7;
