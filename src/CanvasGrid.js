@@ -51,15 +51,6 @@ export class CanvasGrid {
     }
 
     unfillCell(n) {
-        let coords = this.findPosition(n);
-        let x = coords[0] * this.tileSize;
-        let y = coords[1] * this.tileSize;
-
-        var context = this.canvasElement.getContext('2d');
-
-        context.beginPath();
-        context.fillStyle = '#000000';
-        context.fillRect(x, y, this.tileSize, this.tileSize);
-        context.stroke();
+        this.fillCell(n, '#000000');
     }
 }
