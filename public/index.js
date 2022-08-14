@@ -1,4 +1,4 @@
-import { QR } from '../dist/src/index.js';
+import { QR } from './dist/QR';
 
 window.addEventListener('load', function () {
     document.getElementById('submit').addEventListener('click', function () {
@@ -17,6 +17,7 @@ window.addEventListener('load', function () {
         try {
             const qr = new QR('qr', data, mode, errorCorrection);
             qr.printCodeToCanvas();
+            console.log(qr.getCode().join(''));
         } catch (err) {
             console.log(err);
             addError(err);
