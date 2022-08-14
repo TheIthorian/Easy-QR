@@ -1,4 +1,4 @@
-import { QR } from '/dist/src/index.js';
+import { QR } from '../dist/src/index.js';
 
 window.addEventListener('load', function () {
     document.getElementById('submit').addEventListener('click', function () {
