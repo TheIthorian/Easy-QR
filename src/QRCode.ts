@@ -337,8 +337,8 @@ export class QRCode {
             throw ERROR_LOOKUP[validateResult[1]];
         }
 
-        this.version = this.#getRequiredVersion();
-        this.size = this.#getSize();
+        this.version = this.getRequiredVersion();
+        this.size = this.getSize();
 
         if (VERSION_DATA[this.correctionLevel].blocksInGroup2[this.version - 1] > 0) {
             console.log(this.version);
@@ -361,7 +361,7 @@ export class QRCode {
         }
     }
 
-    #getRequiredVersion() {
+    getRequiredVersion() {
         let lengths = VERSION_DATA[this.correctionLevel].ModeSize[this.mode];
         let version;
 
@@ -375,7 +375,7 @@ export class QRCode {
         return version;
     }
 
-    #getSize() {
+    getSize() {
         return 17 + 4 * this.version; // Why 17?
     }
 
