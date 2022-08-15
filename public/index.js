@@ -1,6 +1,7 @@
-import { QR } from './dist/QR';
+import '../dist/main.js';
 
 window.addEventListener('load', function () {
+    // import('../dist/main.js').then(ex => {
     document.getElementById('submit').addEventListener('click', function () {
         removeError();
 
@@ -23,6 +24,7 @@ window.addEventListener('load', function () {
             addError(err);
         }
     });
+    // });
 });
 
 function addError(errorText) {
